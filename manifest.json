@@ -1,0 +1,25 @@
+{
+  "name": "Trip & Gaji - Rahman Azhar",
+  "short_name": "Trip & Gaji",
+  "description": "Kalkulator trip harian dan anggaran slip gaji bulanan.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090a0d",
+  "theme_color": "#090a0d",
+  "icons": [
+    {
+      "src": "./supercal.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./supercal.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

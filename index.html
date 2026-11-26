@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Sistem Kiraan Trip & Slip Gaji</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#090a0d" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="icon" type="image/png" href="./supercal.png" />
+<link rel="apple-touch-icon" href="./supercal.png" />
+
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="brand-wrap">
+      <span class="sys-dot"></span>
+      <h1>TRIP & GAJI </h1>
+    </div>
+    <span class="creator-tag">Created by Rahman Azhar</span>
+  </div>
+  <div class="month-bar">
+    <label for="selectedMonth">BULAN GAJI:</label>
+    <input type="month" id="selectedMonth" />
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('daily', this)">1. REKOD HARIAN</button>
+  <button class="tab-btn" onclick="switchTab('payslip', this)">2. SLIP GAJI AUTO</button>
+</div>
+
+<div class="container">
+  <!-- TAB 1: REKOD HARIAN -->
+  <div id="tab-daily" class="section active">
+    <div class="summary-grid">
+      <div class="stat-box hud-chamfer">
+        <div class="val" id="statTotalTrips">0</div>
+        <div class="lbl">JUMLAH TRIP BULAN INI</div>
+      </div>
+      <div class="stat-box hud-chamfer">
+        <div class="val" id="statBonusDays">0</div>
+        <div class="lbl">HARI CAPAI >= 7 TRIP</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="milestone-note">
+        <span id="tierLabel" class="neon-text">Rate Biasa: RM13 / trip</span>
+        <span id="nextTargetLabel">Target 120 trip</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="tripProgressBar"></div>
+      </div>
+      <div class="milestone-note" style="margin-top:6px;">
+        <span>120: RM18 + RM200</span>
+        <span>180+: RM15 + RM1,600+</span>
+      </div>
+    </div>
+
+    <!-- KAD INPUT HARIAN -->
+    <div class="card" id="entryFormCard">
+      <div class="card-head-flex">
+        <h2 id="formTitle">Tambah Rekod Trip</h2>
+        <button type="button" class="btn-chip-toggle" onclick="toggleMassModal(true)">+ INPUT PUKAL (BULAN LEPAS)</button>
+      </div>
+      <input type="hidden" id="editId" value="" />
+      <input type="hidden" id="tripCount" value="" />
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="tripDate">TARIKH</label>
+        <input type="date" id="tripDate" />
+      </div>
+
+      <!-- PILIHAN JENIS HARI SEBARIS -->
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>JENIS HARI / RATE</label>
+        <div class="daytype-row">
+          <label class="daytype-pill">
+            <input type="radio" name="dayType" value="normal" checked />
+            <div class="pill-content">
+              <span class="dt-title">BIASA</span>
+              <span class="dt-sub">RM13/18</span>
+            </div>
+          </label>
+          <label class="daytype-pill">
+            <input type="radio" name="dayType" value="holiday" />
+            <div class="pill-content">
+              <span class="dt-title">AHAD / PH</span>
+              <span class="dt-sub">RM20/25</span>
+            </div>
+          </label>
+          <label class="daytype-pill">
+            <input type="radio" name="dayType" value="offer" />
+            <div class="pill-content">
+              <span class="dt-title">OFFER</span>
+              <span class="dt-sub">RM25</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- PILL SLIDER BILANGAN TRIP 1 - 20 -->
+      <div class="form-group">
+        <div class="label-flex">
+          <label>BILANGAN TRIP (SLIDE 1 - 20)</label>
+          <span class="selected-trip-badge" id="selectedTripBadge">PILIH: -</span>
+        </div>
+        <div class="trip-pill-scroller" id="tripPillScroller"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Senarai Rekod Bulan Ini (<span id="logCountLabel">0</span> hari)</h2>
+      <div class="log-list" id="logList"></div>
+    </div>
+
+    <!-- BUTANG RESET DATA -->
+    <div class="card">
+      <h2>Pengurusan Data / Reset</h2>
+      <div style="display: flex; gap: 8px; flex-direction: column;">
+        <button class="btn btn-danger-block" onclick="resetCurrentMonthData()">Padam Semua Rekod Bulan Ini Sahaja</button>
+        <button class="btn btn-danger-block" onclick="resetAllData()" style="background: rgba(220, 38, 38, 0.3); font-weight: 700;">Padam Semua Data (Master Reset)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: SLIP GAJI AUTO -->
+  <div id="tab-payslip" class="section">
+    <div class="card no-print">
+      <h2>Tetapan Potongan & Elaun Slip</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inputAdvance">Advance (RM)</label>
+          <input type="number" id="inputAdvance" step="0.01" value="0" onchange="saveSettings()" />
+        </div>
+        <div class="form-group">
+          <label for="inputPhone">Elaun Phone (RM)</label>
+          <input type="number" id="inputPhone" step="0.01" value="30" onchange="saveSettings()" />
+        </div>
+        <div class="form-group">
+          <label for="inputEpf">EPF Employee (RM)</label>
+          <input type="number" id="inputEpf" step="0.01" value="187.00" onchange="saveSettings()" />
+        </div>
+        <div class="form-group">
+          <label for="inputSocso">SOCSO Employee (RM)</label>
+          <input type="number" id="inputSocso" step="0.01" value="20.60" onchange="saveSettings()" />
+        </div>
+        <div class="form-group">
+          <label for="inputEis">EIS Employee (RM)</label>
+          <input type="number" id="inputEis" step="0.01" value="3.30" onchange="saveSettings()" />
+        </div>
+        <div class="form-group">
+          <label for="inputPcb">PCB Tax / Lain2 (RM)</label>
+          <input type="number" id="inputPcb" step="0.01" value="0.00" onchange="saveSettings()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- PAPARAN SLIP GAJI -->
+    <div class="payslip-box" id="payslipArea">
+      <div class="payslip-header">
+        <h3>PENYATA GAJI BULANAN</h3>
+        <div id="slipPeriodLabel">BULAN: -</div>
+      </div>
+
+      <table class="payslip-table">
+        <tr>
+          <th style="width:28%;">GROSS EARNING</th>
+          <th class="num" style="width:22%;">AMOUNT (RM)</th>
+          <th style="width:30%;">DEDUCTIONS</th>
+          <th class="num" style="width:20%;">AMOUNT (RM)</th>
+        </tr>
+        <tr>
+          <td>BASIC SALARY</td>
+          <td class="num" id="slipBasic">0.00</td>
+          <td>EPF (EMPLOYEE)</td>
+          <td class="num" id="slipEpf">187.00</td>
+        </tr>
+        <tr>
+          <td>SUB CONTRACT</td>
+          <td class="num" id="slipSubContract">0.00</td>
+          <td>SOCSO (EMPLOYEE)</td>
+          <td class="num" id="slipSocso">20.60</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>EIS (EMPLOYEE)</td>
+          <td class="num" id="slipEis">3.30</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td>PCB TAX</td>
+          <td class="num" id="slipPcb">0.00</td>
+        </tr>
+        <tr class="bold">
+          <td>TOTAL SALARY</td>
+          <td class="num" id="slipTotalSalary">0.00</td>
+          <td>DEDUCTIONS</td>
+          <td class="num" id="slipStatDed">210.90</td>
+        </tr>
+        <tr>
+          <td>PHONE</td>
+          <td class="num" id="slipPhone">30.00</td>
+          <td>ADVANCE</td>
+          <td class="num" id="slipAdvance">0.00</td>
+        </tr>
+        <tr class="bold">
+          <td>TOTAL EARNING/INCOME</td>
+          <td class="num" id="slipTotalIncome">0.00</td>
+          <td>TOTAL DEDUCTIONS</td>
+          <td class="num" id="slipTotalDed">210.90</td>
+        </tr>
+        <tr class="nett-highlight">
+          <td>NETT PAY</td>
+          <td class="num" id="slipNettPay">0.00</td>
+          <td colspan="2" class="center" id="slipTierBadge" style="font-size:0.7rem;">-</td>
+        </tr>
+      </table>
+
+      <table class="payslip-table">
+        <tr>
+          <th colspan="4">SUB CONTRACT (PECAHAN TRIP)</th>
+        </tr>
+        <tr>
+          <td style="width:25%;">RM 13.00</td>
+          <td class="center" style="width:25%;" id="qty13">0</td>
+          <td style="width:15%;">RM</td>
+          <td class="num" style="width:35%;" id="amt13">0.00</td>
+        </tr>
+        <tr>
+          <td>RM 20.00</td>
+          <td class="center" id="qty20">0</td>
+          <td>RM</td>
+          <td class="num" id="amt20">0.00</td>
+        </tr>
+        <tr>
+          <td>RM 25.00</td>
+          <td class="center" id="qty25">0</td>
+          <td>RM</td>
+          <td class="num" id="amt25">0.00</td>
+        </tr>
+        <tr>
+          <td>RM 30.00</td>
+          <td class="center" id="qty30">0</td>
+          <td>RM</td>
+          <td class="num" id="amt30">0.00</td>
+        </tr>
+        <tr class="bold">
+          <td>TOTAL BASIC SALARY</td>
+          <td class="center" id="qtyTotalTrip">0</td>
+          <td>RM</td>
+          <td class="num" id="amtTotalTrip">0.00</td>
+        </tr>
+      </table>
+
+      <table class="payslip-table" style="margin-bottom:0;">
+        <tr>
+          <th colspan="5">SUB CONTRACT (ELAUN & BONUS)</th>
+        </tr>
+        <tr>
+          <td style="width:14%;">A02</td>
+          <td style="width:42%;" id="labelA02">OVER 120 TRIP ALLOWANCE</td>
+          <td class="num" style="width:14%;" id="rateA02">0.00</td>
+          <td class="center" style="width:12%;" id="qtyA02">0</td>
+          <td class="num" style="width:18%;" id="amtA02">0.00</td>
+        </tr>
+        <tr>
+          <td>A20</td>
+          <td>ONE DAY >= 7 TRIP ALLOWANCE</td>
+          <td class="num">20.00</td>
+          <td class="center" id="qtyA20">0</td>
+          <td class="num" id="amtA20">0.00</td>
+        </tr>
+        <tr>
+          <td>F - TOTAL</td>
+          <td id="labelMonthlyBonus">MONTHLY TRIP BONUS</td>
+          <td class="num">-</td>
+          <td class="center" id="qtyBonusTrip">0</td>
+          <td class="num" id="amtMonthlyBonus">0.00</td>
+        </tr>
+        <tr class="bold">
+          <td colspan="4" class="num">TOTAL ALLOWANCE</td>
+          <td class="num" id="amtTotalAllowance">0.00</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="tools-row no-print">
+      <button class="btn btn-primary" onclick="window.print()">Cetak / Simpan PDF</button>
+      <button class="btn btn-outline" onclick="exportBackup()">Backup Data (JSON)</button>
+    </div>
+    <div class="no-print" style="margin-top:8px;">
+      <label class="btn btn-outline" style="cursor:pointer;">
+        Restore Data Backup
+        <input type="file" accept=".json" style="display:none;" onchange="importBackup(event)" />
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING SAVE BAR (UNTUK TAB REKOD HARIAN) -->
+<div class="floating-save-bar no-print" id="floatingSaveBar">
+  <div class="floating-inner">
+    <button class="btn btn-primary" onclick="saveTripEntry()" id="saveBtn">SIMPAN TRIP HARI INI</button>
+    <button class="btn btn-outline" onclick="resetForm()" id="cancelEditBtn" style="display:none; width:auto;">BATAL</button>
+  </div>
+</div>
+
+<!-- MODAL MASS INPUT (PUKAL BULAN LEPAS) -->
+<div class="modal-backdrop no-print" id="massModal">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div>
+        <h3>INPUT PUKAL (MASS ENTRY)</h3>
+        <p class="modal-sub">Isi banyak tarikh serentak ikut bulan dipilih</p>
+      </div>
+      <button type="button" class="btn-close-modal" onclick="toggleMassModal(false)">✕</button>
+    </div>
+
+    <div class="mass-controls">
+      <div class="form-group" style="flex:1;">
+        <label for="massMonthPicker">PILIH BULAN LEPAS</label>
+        <input type="month" id="massMonthPicker" onchange="generateMassRows()" />
+      </div>
+      <button type="button" class="btn btn-outline" style="width:auto; align-self:flex-end; padding:9px 12px; font-size:0.78rem;" onclick="addExtraMassRow()">+ Baris</button>
+    </div>
+
+    <div class="mass-hint">
+      * Tarikh kosongkan trip akan diabaikan. Klik jenis hari untuk tukar (B = Biasa, H = Ahad/PH, O = Offer).
+    </div>
+
+    <div class="mass-list-header">
+      <span>TARIKH</span>
+      <span>TRIP</span>
+      <span>JENIS</span>
+    </div>
+    <div class="mass-rows-container" id="massRowsContainer"></div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="toggleMassModal(false)">Tutup</button>
+      <button type="button" class="btn btn-primary" onclick="saveMassEntries()">Simpan Semua Rekod</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch((err) => {
+        console.error('SW gagal didaftarkan:', err);
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
